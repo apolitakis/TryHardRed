@@ -4,7 +4,13 @@
 
 // If you would like to ensure save compatibility, update the values below with those for your hack. You can find these through the debug menu.
 // Please note that this simple check is not 100% foolproof, but should be able to catch most unintended shifts.
+// FireRed Gen 9: friends keep their saves across updates, so these are pinned to the FireRed build's sizes.
+// A change that moves them breaks existing saves: update the number only on purpose, with a save migration.
+#if IS_FRLG
+#define T_SAVEBLOCK1_SIZE 15756
+#else
 #define T_SAVEBLOCK1_SIZE 15568
+#endif
 #define T_SAVEBLOCK2_SIZE 3884
 #define T_SAVEBLOCK3_SIZE 4
 #define T_POKEMONSTORAGE_SIZE 34144
