@@ -88,3 +88,4 @@ __pycache__
 # Ours is JavaScript we write, unlike upstream's generated .js
 !/site/**/*.js
 !/tools/patch/*.js
+!/hosting/**/*.js
