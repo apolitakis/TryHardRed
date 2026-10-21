@@ -13,6 +13,7 @@
 #include "sprite.h"
 #include "util.h"
 #include "test_runner.h"
+#include "tryhardred_gimmicks.h"
 
 #include "data/gimmicks.h"
 
@@ -36,6 +37,8 @@ void AssignUsableGimmicks(void)
 // Returns whether a battler is able to use a gimmick. Checks consumption and gimmick specific functions.
 bool32 CanActivateGimmick(enum BattlerId battler, enum Gimmick gimmick)
 {
+    if (!IsGimmickAllowedInBattle(gimmick)) // TryHardRed: the fight's gimmick rule binds both sides
+        return FALSE;
     return gGimmicksInfo[gimmick].CanActivate != NULL && gGimmicksInfo[gimmick].CanActivate(battler);
 }
 

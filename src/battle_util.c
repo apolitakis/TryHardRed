@@ -9312,6 +9312,17 @@ void TryRestoreHeldItems(void)
                 SetMonData(&gParties[B_TRAINER_PLAYER][i], MON_DATA_HELD_ITEM, &lostItem);
         }
     }
+
+    // TryHardRed: consumed, flung, knocked off or stolen, whatever a Pokémon held comes back after the battle.
+    if (B_TRH_RESTORE_ALL_HELD_ITEMS)
+    {
+        for (u32 i = 0; i < PARTY_SIZE; i++)
+        {
+            enum Item originalItem = gBattleStruct->itemLost[B_TRAINER_PLAYER][i].originalItem;
+            if (originalItem != ITEM_NONE && GetMonData(&gParties[B_TRAINER_PLAYER][i], MON_DATA_HELD_ITEM) == ITEM_NONE)
+                SetMonData(&gParties[B_TRAINER_PLAYER][i], MON_DATA_HELD_ITEM, &originalItem);
+        }
+    }
 }
 
 bool32 CanStealItem(enum BattlerId battlerStealing, enum BattlerId battlerItem, enum Item item)
@@ -10847,6 +10858,9 @@ bool32 IsBattlerInvalidForSpreadMove(enum BattlerId battlerAtk, enum BattlerId b
 
 bool32 IsAllowedToUseBag(void)
 {
+    if (B_TRH_NO_BAG_VS_TRAINERS && !TESTING && (gBattleTypeFlags & BATTLE_TYPE_TRAINER))
+        return FALSE;
+
     switch (VarGet(B_VAR_NO_BAG_USE))
     {
     case NO_BAG_RESTRICTION:
