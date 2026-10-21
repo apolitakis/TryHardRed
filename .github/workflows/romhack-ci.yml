@@ -1,0 +1,67 @@
+name: Romhack CI
+
+# Builds the FireRed ROM and runs expansion's headless test suite on the FireRed target.
+# The ROM itself is never uploaded: only its size report and linker map, so no game data leaves the runner.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  COMPARE: 0
+
+jobs:
+  build-firered:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Toolchain
+        run: sh scripts/setup-toolchain.sh
+
+      - name: ROM (FireRed)
+        shell: bash  # explicit bash runs with pipefail, so a failed make fails the step through tee
+        run: make firered -j$(nproc) -O 2>&1 | tee build.log
+
+      - name: Size report
+        run: |
+          {
+            echo '### pokefirered.gba'
+            echo '```'
+            grep -A3 'Memory region' build.log
+            echo '```'
+            echo "ROM sha1: \`$(sha1sum pokefirered.gba | cut -d' ' -f1)\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload map (not the ROM)
+        uses: actions/upload-artifact@v4
+        with:
+          name: pokefirered-map
+          path: pokefirered.map
+          retention-days: 14
+
+  test-firered:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Toolchain
+        run: sh scripts/setup-toolchain.sh
+
+      - name: Test (make check, FireRed target)
+        env:
+          TEST: 1
+        run: make check BUILD=firered -j$(nproc)
+
+  patch-tools:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: BPS make/apply round trip (Python and browser patchers agree)
+        run: python3 tools/patch/selftest.py

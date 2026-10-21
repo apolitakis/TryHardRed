@@ -66,3 +66,25 @@ tools/aif2pcm/aif2pcm
 *.smolTM
 __pycache__
 .map_version
+
+# --- firered-gen9 ---
+# Never commit a ROM: not the clean FireRed ROM, not a build, not a patched copy.
+*.gba
+*.GBA
+*.agb
+# upstream's multiboot images in data/ are not game ROMs
+!/data/mb_*.gba
+*.zip
+*.7z
+/roms/
+/baserom*
+# Built patches and site output (published from releases, not from git)
+*.bps
+*.ups
+*.ips
+/dist/
+/out/
+/site/play/emulatorjs/
+# Ours is JavaScript we write, unlike upstream's generated .js
+!/site/**/*.js
+!/tools/patch/*.js
