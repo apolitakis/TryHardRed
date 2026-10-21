@@ -1,4 +1,4 @@
-# FireRed Gen 9
+# TryHardRed (FireRed Gen 9)
 
 FireRed as it is (same Kanto, story, maps and trainers) with Gen 9 battle mechanics and trainer AI that plays like a
 decent human. Built on [pokeemerald-expansion](https://github.com/rh-hideout/pokeemerald-expansion)'s FireRed target.
@@ -22,8 +22,8 @@ tracked `.gba` files are upstream's small multiboot images in `data/`). Friends 
 own FireRed (USA) ROM, in the browser or with any BPS patcher.
 
 ```sh
-python3 tools/patch/bps.py make  CLEAN.gba pokefirered.gba firered-gen9.bps
-python3 tools/patch/bps.py apply CLEAN.gba firered-gen9.bps patched.gba
+python3 tools/patch/bps.py make  CLEAN.gba pokefirered.gba tryhardred.bps
+python3 tools/patch/bps.py apply CLEAN.gba tryhardred.bps patched.gba
 python3 tools/patch/selftest.py      # no ROM needed
 ```
 

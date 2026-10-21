@@ -34,7 +34,7 @@ into `out/`.
 
 ## One-time setup (not done yet)
 
-- A Pages project name for this site (`PAGES_PROJECT`, default `firered-gen9`) and its KV namespace for the Ideas box
+- A Pages project name for this site (`PAGES_PROJECT`, default `tryhardred`) and its KV namespace for the Ideas box
   (`npx wrangler@4 kv namespace create FEEDBACK`, id into `kv-id.txt`).
 - `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` in the environment, with `api.cloudflare.com` and the new
   `*.pages.dev` host allowed. Sonterra's README "One-time setup" has the token steps.

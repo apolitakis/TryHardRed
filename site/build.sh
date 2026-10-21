@@ -47,7 +47,7 @@ cp "$TMP/core/package/reports/mgba.json" "$D/play/emulatorjs/data/cores/reports/
 rm -rf "$TMP"
 
 # The patch, and the manifest the page reads to match a ROM to it.
-python3 tools/patch/bps.py make "$CLEAN_ROM" "$ROM" "$D/play/patch/firered-gen9.bps"
+python3 tools/patch/bps.py make "$CLEAN_ROM" "$ROM" "$D/play/patch/tryhardred.bps"
 python3 - "$CLEAN_ROM" "$ROM" "$D/play/patch" "$VERSION" "$SOURCE_LABEL" "$COMMIT" "$BASE" <<'PY'
 import json, os, sys, zlib, datetime
 clean, rom, out, version, label, commit, base = sys.argv[1:]
@@ -57,7 +57,7 @@ json.dump({
     "version": version, "built": datetime.date.today().isoformat(), "commit": commit, "base": base,
     "patches": [{
         "source": label, "sourceSize": len(c), "sourceCrc": f"{zlib.crc32(c):08x}",
-        "targetCrc": f"{zlib.crc32(t):08x}", "file": "firered-gen9.bps",
+        "targetCrc": f"{zlib.crc32(t):08x}", "file": "tryhardred.bps",
     }],
 }, open(os.path.join(out, "patch.json"), "w"), indent=2)
 PY
@@ -71,7 +71,7 @@ done
 
 cp -r hosting/functions "$OUT/functions"
 {
-  echo "name = \"${PAGES_PROJECT:-firered-gen9}\""
+  echo "name = \"${PAGES_PROJECT:-tryhardred}\""
   echo 'pages_build_output_dir = "dist"'
   echo 'compatibility_date = "2026-10-01"'
   if [ -s hosting/kv-id.txt ]; then

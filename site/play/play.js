@@ -3,7 +3,7 @@
 // so every update applies by itself. Nothing is uploaded.
 (function () {
   const PATCH_DIR = "patch/";
-  const GAME_NAME = "firered-gen9"; // fixed, so EmulatorJS keeps the same save across patch updates
+  const GAME_NAME = "tryhardred"; // fixed, so EmulatorJS keeps the same save across patch updates
   const $ = id => document.getElementById(id);
   let manifest = null, cleanRom = null;
 
@@ -16,7 +16,7 @@
   // --- the clean ROM, remembered in IndexedDB ---
   function db() {
     return new Promise((resolve, reject) => {
-      const req = indexedDB.open("firered-gen9-play", 1);
+      const req = indexedDB.open("tryhardred-play", 1);
       req.onupgradeneeded = () => req.result.createObjectStore("files");
       req.onsuccess = () => resolve(req.result);
       req.onerror = () => reject(req.error);

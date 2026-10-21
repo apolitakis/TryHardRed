@@ -1,4 +1,4 @@
-> **This is the FireRed Gen 9 romhack**, built on pokeemerald-expansion. Start with [ROMHACK.md](ROMHACK.md); the rest of this README is upstream's.
+> **This is TryHardRed, the FireRed Gen 9 romhack**, built on pokeemerald-expansion. Start with [ROMHACK.md](ROMHACK.md); the rest of this README is upstream's.
 
 # About `pokeemerald-expansion`
 
