@@ -45,3 +45,18 @@ into `out/`.
 2. `RELEASE=$(python3 hosting/release.py next) CLEAN_ROM=... sh site/build.sh out`
 3. `cd out && npx -y wrangler@4 pages deploy --project-name "$PAGES_PROJECT" --branch main --commit-dirty=true`
 4. Check `/play/` live (patch.json shows the release; a ROM patches and boots), then `python3 hosting/release.py append out`.
+
+## Playtest previews (on Alex's ask, not "ship it")
+
+The Pages project `tryhardred` exists (created 2026-10-21 through the API). A playtest preview deploys the same build to
+the `playtest` branch, which never touches production:
+
+```sh
+cd out && npx -y wrangler@4 pages deploy --project-name tryhardred --branch playtest --commit-dirty=true
+```
+
+It's served at https://playtest.tryhardred.pages.dev/play/. Cloud sessions can't reach `*.pages.dev` (the proxy refuses
+it), so check a deploy through the API's deployments list instead.
+
+- 2026-10-21 16:05: first preview, build dev-0a01221834 (phase 0), for the phone and Steam Deck check. The Ideas box
+  answers 503 until the KV namespace is made.
