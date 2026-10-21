@@ -33,6 +33,7 @@ python3 tools/patch/selftest.py      # no ROM needed
 |---|---|
 | `scripts/setup-toolchain.sh` | toolchain install, for CI and cloud sessions |
 | `.github/workflows/romhack-ci.yml` | builds the ROM, runs `make check` on FireRed, checks the patch tools (upstream's workflows are removed) |
+| `scripts/play.sh` | play the newest build in mGBA on your Mac or Linux box: remembers your ROM, fetches only new patches, keeps one save |
 | `tools/patch/` | BPS make/apply (`bps.py`) and its self-test |
 | `site/play/` | the playtest page: your own ROM + the patch, played in EmulatorJS (mGBA core), saves kept in the browser |
 | `site/build.sh` | builds the site into `out/` (see `hosting/README.md`) |
