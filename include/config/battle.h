@@ -456,6 +456,7 @@
 
 // TryHardRed
 #define B_TRH_NO_BAG_VS_TRAINERS        TRUE       // The player can't use items from the Bag in Trainer battles (Poké Balls still work in wild battles).
+#define B_TRH_NO_TRAINER_ITEMS          TRUE       // Opposing Trainers never use their items (Potions, X items, etc.) in battle. Held items still work.
 #define B_TRH_RESTORE_ALL_HELD_ITEMS    TRUE       // After every battle, a Pokémon that ends holding nothing gets back what it held at the start, Berries and other consumables included.
 
 #endif // GUARD_CONFIG_BATTLE_H

@@ -33,6 +33,9 @@ bool32 ShouldUseItem(enum BattlerId battler)
     if (IsAiVsAiBattle())
         return FALSE;
 
+    if (B_TRH_NO_TRAINER_ITEMS && !TESTING)
+        return FALSE;
+
     // If teaming up with player and Pokemon is on the right, or Pokemon is currently held by Sky Drop
     if ((gBattleTypeFlags & BATTLE_TYPE_INGAME_PARTNER && GetBattlerPosition(battler) == B_POSITION_PLAYER_RIGHT)
        || gBattleMons[battler].volatiles.semiInvulnerable == STATE_SKY_DROP_TARGET)
