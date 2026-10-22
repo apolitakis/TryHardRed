@@ -85,7 +85,8 @@ bool32 CanDynamax(enum BattlerId battler)
     {
         if (!CheckBagHasItem(ITEM_DYNAMAX_BAND, 1))
             return FALSE;
-        if (B_FLAG_DYNAMAX_BATTLE == 0 || (B_FLAG_DYNAMAX_BATTLE != 0 && !FlagGet(B_FLAG_DYNAMAX_BATTLE)))
+        // TryHardRed: with no Dynamax flag set, the fight's gimmick rule decides (see tryhardred_gimmicks.c).
+        if (B_FLAG_DYNAMAX_BATTLE != 0 && !FlagGet(B_FLAG_DYNAMAX_BATTLE))
             return FALSE;
     }
 

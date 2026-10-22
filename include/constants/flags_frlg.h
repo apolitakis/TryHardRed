@@ -1188,9 +1188,10 @@
 #define FLAG_HIDDEN_ITEM_SSANNE_EXTERIOR_LAVA_COOKIE                       (FLAG_HIDDEN_ITEMS_START + 190)
 
 // Unused hidden item flags
-#define FLAG_UNUSED_0x4A7               0x4A7 // Unused Flag
-#define FLAG_UNUSED_0x4A8               0x4A8 // Unused Flag
-#define FLAG_UNUSED_0x4A9               0x4A9 // Unused Flag
+// TryHardRed (were unused)
+#define FLAG_TRH_EXP_SHARE_ON           0x4A7 // Gen 6+ Exp. Share switched on (I_EXP_SHARE_FLAG)
+#define FLAG_TRH_TERA_ORB_CHARGED       0x4A8 // B_FLAG_TERA_ORB_CHARGED
+#define FLAG_TRH_RECEIVED_GIMMICK_KIT   0x4A9 // Oak or a nurse handed over the gimmick key items and the Exp. Share
 #define FLAG_UNUSED_0x4AA               0x4AA // Unused Flag
 #define FLAG_UNUSED_0x4AB               0x4AB // Unused Flag
 #define FLAG_UNUSED_0x4AC               0x4AC // Unused Flag

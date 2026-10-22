@@ -26,6 +26,7 @@ EventScript_PkmnCenterNurse_HealPkmn_Frlg::
 	message Text_TakeYourPkmnForFewSeconds_Frlg
 	waitmessage
 	call EventScript_PkmnCenterNurse_TakeAndHealPkmn_Frlg
+	call TryHardRed_EventScript_NurseGivesGimmickKit
 	goto EventScript_PkmnCenterNurse_CheckTrainerTowerAndUnionRoom_Frlg
 	end
 
