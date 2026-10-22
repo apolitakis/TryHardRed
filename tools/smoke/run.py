@@ -89,7 +89,8 @@ def brock(g):
 
 def mt_moon(g):
     """Route 3 and Mt. Moon (beat Miguel, take the Helix Fossil) to Cerulean City."""
-    g.travel_to("MAP_MT_MOON_B2F")
+    g.repel = True  # Mt. Moon's encounter rate stalls the walker; the forest already covers wild battles
+    g.travel_to("MAP_MT_MOON_B2F", (14, 8))
     g.go(14, 8)
     g.talk("UP")
     g.wait_free(timeout=20000)
@@ -109,9 +110,7 @@ def misty(g):
     check(g.flag("FLAG_BADGE02_GET"), "Cascade Badge")
 
 
-CHAPTERS = [new_game, starter, pokedex, pewter, brock]
-# Not in the default run yet: the walker still trips in Mt. Moon's fossil room. Run with --from mt_moon.
-WORK_IN_PROGRESS = [mt_moon, misty]
+CHAPTERS = [new_game, starter, pokedex, pewter, brock, mt_moon, misty]
 
 
 def main():
@@ -122,7 +121,7 @@ def main():
     ap.add_argument("--shots", help="directory for screenshots")
     args = ap.parse_args()
 
-    chapters = CHAPTERS + WORK_IN_PROGRESS if (args.only or args.start) else CHAPTERS
+    chapters = CHAPTERS
     names = [c.__name__ for c in chapters]
     first = names.index(args.only or args.start) if (args.only or args.start) else 0
     last = first + 1 if args.only else len(chapters)
@@ -139,6 +138,7 @@ def main():
             chapter(g)
         except Exception as e:  # report and stop: later chapters need this one's state
             g.shot(f"FAIL-{chapter.__name__}")
+            g.save_state(os.path.join(STATES, f"FAIL-{chapter.__name__}.ss"))  # to debug from where it stopped
             failed = f"{chapter.__name__}: {type(e).__name__}: {e}"
             break
         g.save_state(os.path.join(STATES, f"{chapter.__name__}.ss"))

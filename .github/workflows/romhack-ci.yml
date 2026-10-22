@@ -1,6 +1,6 @@
 name: Romhack CI
 
-# Builds the FireRed ROM, plays it headless from a new game to Brock (tools/smoke), and runs expansion's headless
+# Builds the FireRed ROM, plays it headless from a new game to Misty (tools/smoke), and runs expansion's headless
 # test suite on the FireRed target.
 # The ROM itself is never uploaded: only its size report and linker map, so no game data leaves the runner.
 
@@ -40,7 +40,7 @@ jobs:
             echo "ROM sha1: \`$(sha1sum pokefirered.gba | cut -d' ' -f1)\`"
           } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Smoke run (new game to Brock, headless mGBA)
+      - name: Smoke run (new game to Misty, headless mGBA)
         run: |
           sudo apt-get install -y -q --no-install-recommends libmgba-dev
           python3 tools/smoke/run.py

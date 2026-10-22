@@ -1,15 +1,15 @@
 """Static route planning over the game's maps for the smoke run.
 
 Reads each map's layout (collision bits from map.bin), warps and connections, and finds a chain of hops from a
-position on one map to another map: walk to a warp, or walk off an edge into a connected map. It ignores
-ledges, elevation, NPCs and story blocks, so the runner still replans around surprises at run time.
+position on one map to another map: walk to a warp, or walk off an edge into a connected map. It follows
+ledges and elevation but ignores NPCs and story blocks, so the runner still replans around surprises at run time.
 """
 import collections
 import json
 import os
 import re
 
-from game import ROOT
+from game import ROOT, climb, side_blocked
 
 DIR_STEP = {"up": (0, -1), "down": (0, 1), "left": (-1, 0), "right": (1, 0)}
 # FireRed metatile behaviors (include/constants/metatile_behaviors_frlg.h)
@@ -74,33 +74,46 @@ class World:
         return (0 <= x < w and 0 <= y < h and not cells[y * w + x] & 0x0C00
                 and (x, y) not in self.obstacles(map_id) and self.behavior(map_id, x, y) not in WATER)
 
-    def step(self, map_id, x, y, dx, dy):
-        """Where a step from (x, y) lands: the next tile, two tiles on for a ledge hopped the right way, or None."""
+    def elevation(self, map_id, x, y):
+        w, h, cells = self.grid(map_id)
+        return cells[y * w + x] >> 12 if 0 <= x < w and 0 <= y < h else 0
+
+    def step(self, map_id, x, y, e, dx, dy):
+        """Where a step from (x, y) at elevation e lands, as (x, y, elevation): the next tile, two tiles on for a
+        ledge hopped the right way, or None (wall, water, cliff)."""
         nx, ny = x + dx, y + dy
         w, h, _ = self.grid(map_id)
         if not (0 <= nx < w and 0 <= ny < h):
             return None
         if self.behavior(map_id, nx, ny) in JUMPS:
-            if JUMPS[self.behavior(map_id, nx, ny)] == (dx, dy) and self.open_tile(map_id, nx + dx, ny + dy):
-                return nx + dx, ny + dy
+            if JUMPS[self.behavior(map_id, nx, ny)] != (dx, dy):
+                return None
+            nx, ny = nx + dx, ny + dy
+        elif side_blocked(self.behavior(map_id, x, y), self.behavior(map_id, nx, ny), dx, dy):
             return None
-        return (nx, ny) if self.open_tile(map_id, nx, ny) else None
+        e2 = climb(e, self.elevation(map_id, nx, ny))
+        return (nx, ny, e2) if e2 is not None and self.open_tile(map_id, nx, ny) else None
 
     def region(self, map_id, start):
-        """Tiles reachable on foot from start (hopping ledges downhill), plus the blocked tiles next to them
-        (warps often sit on those)."""
-        seen, edge = {start}, set()
-        queue = collections.deque([start])
+        """Tiles reachable on foot from start (hopping ledges downhill, never off a cliff), plus the blocked tiles
+        next to them (warps often sit on those)."""
+        first = (start[0], start[1], climb(0, self.elevation(map_id, *start)) or 0)
+        seen, edge = {first}, set()
+        queue = collections.deque([first])
         while queue:
-            x, y = queue.popleft()
+            x, y, e = queue.popleft()
             for dx, dy in DIR_STEP.values():
-                n = self.step(map_id, x, y, dx, dy)
+                n = self.step(map_id, x, y, e, dx, dy)
                 if n is None:
                     edge.add((x + dx, y + dy))
                 elif n not in seen:
                     seen.add(n)
                     queue.append(n)
-        return seen, edge
+        return {(x, y) for x, y, _ in seen}, edge
+
+    def _reaches(self, map_id, pos, goal):
+        reach, edge = self.region(map_id, pos)
+        return goal in reach or goal in edge
 
     def hops_from(self, map_id, pos):
         """Every hop available from pos: (kind, target, dest map, arrival pos)."""
@@ -137,14 +150,15 @@ class World:
                     out.append(("conn", d, c["map"], (dw - 1 if d == "left" else 0, y - off)))
         return out
 
-    def route(self, map_id, pos, goal_map):
-        """Fewest hops from (map, pos) to goal_map, as a list of (kind, target, dest map)."""
+    def route(self, map_id, pos, goal_map, goal_pos=None):
+        """Fewest hops from (map, pos) to goal_map (to the part of it that reaches goal_pos, if given: caves split
+        one map into pieces joined by other floors), as a list of (kind, target, dest map)."""
         start = (map_id, tuple(pos))
         prev = {start: None}
         queue = collections.deque([start])
         while queue:
             cur = queue.popleft()
-            if cur[0] == goal_map:
+            if cur[0] == goal_map and (goal_pos is None or self._reaches(cur[0], cur[1], tuple(goal_pos))):
                 path = []
                 while prev[cur]:
                     cur, hop = prev[cur]

@@ -16,6 +16,25 @@ BUILD = os.path.join(ROOT, "build", "smoke")
 KEYS = {"A": 1, "B": 2, "SELECT": 4, "START": 8, "RIGHT": 16, "LEFT": 32, "UP": 64, "DOWN": 128, "R": 256, "L": 512}
 DIRS = {"UP": (0, -1), "DOWN": (0, 1), "LEFT": (-1, 0), "RIGHT": (1, 0)}
 MAP_OFFSET = 7  # the live map grid has a 7-tile border on each side
+def climb(elev, tile):
+    """The player's elevation after stepping onto a tile of elevation `tile`, or None if the step is a cliff
+    (IsElevationMismatchAt): 0 and 15 are bridges/any-level, and only real levels stick to the player."""
+    if elev and tile not in (0, 15) and tile != elev:
+        return None
+    return elev if tile in (0, 15) else tile
+
+
+# FireRed one-way walls (MB_FRLG_IMPASSABLE_*): behavior -> the sides of the tile you can't cross
+SIDES = {0x30: "e", 0x31: "w", 0x32: "n", 0x33: "s", 0x34: "ne", 0x35: "nw", 0x36: "se", 0x37: "sw"}
+SIDE = {(0, 1): ("s", "n"), (0, -1): ("n", "s"), (-1, 0): ("w", "e"), (1, 0): ("e", "w")}  # step -> (out, in)
+
+
+def side_blocked(here, there, dx, dy):
+    """IsMetatileDirectionallyImpassable: leaving through a blocked side of this tile or entering one of the next."""
+    out, into = SIDE[(dx, dy)]
+    return out in SIDES.get(here, "") or into in SIDES.get(there, "")
+
+
 JUMPS = {0x38: (1, 0), 0x39: (-1, 0), 0x3A: (0, -1), 0x3B: (0, 1)}  # FireRed ledge behaviors -> hop direction
 
 OFFSETS_C = r"""
@@ -155,6 +174,7 @@ class Game:
         self.proc = subprocess.Popen([build_core(), rom], stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True)
         self.frame = 0
         self.shot_count = 0
+        self.repel = False  # keep a Repel running so wild battles don't stall long walks (trainers still fight)
         self.invincible = invincible  # keep the player's battlers at full HP: the smoke run checks flow, not skill
 
     # --- the core ---
@@ -236,6 +256,10 @@ class Game:
     def var(self, name):
         vid = self.const[name] if isinstance(name, str) else name
         return self.r16(self.sb1() + self.off["sb1_vars"] + (vid - self.const["VARS_START"]) * 2)
+
+    def set_var(self, name, value):
+        vid = self.const[name] if isinstance(name, str) else name
+        self.cmd(f"write16 {self.sb1() + self.off['sb1_vars'] + (vid - self.const['VARS_START']) * 2} {value}")
 
     def location(self):
         base = self.sb1() + self.off["sb1_location"]
@@ -322,6 +346,8 @@ class Game:
         """Walks to a tile with BFS over the live map grid, replanning around tiles that turn out blocked."""
         goals = tx if isinstance(tx, (set, frozenset)) else {(tx, ty)}
         blocked, talked = set(), set()
+        if self.repel:
+            self.set_var("VAR_REPEL_STEP_COUNT", 250)
         for _ in range(max_steps):
             if stop_when and stop_when():
                 return True
@@ -368,15 +394,29 @@ class Game:
                 return True
             return (cells[gy * w + gx] & 0x0C00) == 0 and (x, y) not in blocked
 
+        def elevation(x, y):
+            gx, gy = x + MAP_OFFSET, y + MAP_OFFSET
+            return cells[gy * w + gx] >> 12 if 0 <= gx < w and 0 <= gy < h else 0
+
+        def enter(cur, pos, d, hop=False):
+            if not hop and here in world.maps and side_blocked(world.behavior(here, *cur[:2]),
+                                                               world.behavior(here, *pos), *DIRS[d]):
+                return
+            e = climb(cur[2], elevation(*pos))
+            if e is not None and (x := (pos[0], pos[1], e)) not in prev and passable(*pos):
+                prev[x] = (cur, d)
+                queue.append(x)
+
         world = self.world()
         here = self.location()
         mw, mh = self.map_size()
-        prev = {start: None}
-        queue = collections.deque([start])
+        first = (start[0], start[1], climb(0, elevation(*start)) or 0)
+        prev = {first: None}
+        queue = collections.deque([first])
         found = None
         while queue:
             cur = queue.popleft()
-            if cur in goals:
+            if cur[:2] in goals:
                 found = cur
                 break
             for d, (dx, dy) in DIRS.items():
@@ -384,14 +424,10 @@ class Game:
                 if here in world.maps and 0 <= nxt[0] < mw and 0 <= nxt[1] < mh:
                     jump = JUMPS.get(world.behavior(here, *nxt))
                     if jump is not None:  # a ledge: hop it two tiles the one way it allows
-                        land = (nxt[0] + dx, nxt[1] + dy)
-                        if jump == (dx, dy) and land not in prev and passable(*land):
-                            prev[land] = (cur, d)
-                            queue.append(land)
+                        if jump == (dx, dy):
+                            enter(cur, (nxt[0] + dx, nxt[1] + dy), d, hop=True)
                         continue
-                if nxt not in prev and passable(*nxt):
-                    prev[nxt] = (cur, d)
-                    queue.append(nxt)
+                enter(cur, nxt, d)
         if found is None:
             return None
         path = []
@@ -482,6 +518,8 @@ class Game:
                 self.heal_player_battlers()
             choosing = self.player_choosing_move()
             if choosing and not in_menu:
+                if self.invincible and turn >= 12:  # a walled matchup (Vine Whip into Koffing): finish it off
+                    self.weaken_foes()
                 self.pick_move_slot(turn)
                 turn += 1
                 if gimmick and not asked:
@@ -523,6 +561,13 @@ class Game:
             for i in range(4):
                 if hp and self.r8(mon + self.off["bmon_pp"] + i) < 5:
                     self.cmd(f"write8 {mon + self.off['bmon_pp'] + i} 20")
+
+    def weaken_foes(self):
+        size, base = self.off["bmon_size"], self.sym["gBattleMons"]
+        for battler in (1, 3):
+            hp = base + battler * size + self.off["bmon_hp"]
+            if self.r16(hp) > 1:
+                self.cmd(f"write16 {hp} 1")
 
     def handle(self):
         """Deals with whatever took control away: a battle, a scene or text."""
@@ -612,13 +657,14 @@ class Game:
                 self.frames(40)
         self.wait_until(lambda: changed() and self.free_to_move(), timeout=600, what=f"warp at {(x, y)}")
 
-    def travel_to(self, goal, max_hops=40):
-        """Plans a route over the game's maps (see world.py) and follows it, replanning after every hop."""
+    def travel_to(self, goal, pos=None, max_hops=40):
+        """Plans a route over the game's maps (see world.py) and follows it, replanning after every hop. With pos,
+        arrives in the part of the goal map that can walk to pos."""
         for _ in range(max_hops):
             here = self.location()
-            if here == goal:
+            if here == goal and (pos is None or self.world()._reaches(here, self.player_xy(), tuple(pos))):
                 return
-            route = self.world().route(here, self.player_xy(), goal)
+            route = self.world().route(here, self.player_xy(), goal, pos)
             if not route:
                 raise RuntimeError(f"no route from {here} {self.player_xy()} to {goal}")
             kind, target, dest = route[0]

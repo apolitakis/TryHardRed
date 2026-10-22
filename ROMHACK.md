@@ -10,7 +10,7 @@ Scope, phases and decisions: the scoping doc (Claude Doc "FireRed Gen 9 romhack:
 sh scripts/setup-toolchain.sh        # ARM toolchain, libpng, Python (Ubuntu/Debian)
 make firered -j$(nproc)              # -> pokefirered.gba
 make check BUILD=firered TEST=1 -j$(nproc)   # expansion's headless test suite, FireRed target
-python3 tools/smoke/run.py           # smoke run: new game to Brock in mGBA, headless (needs libmgba-dev)
+python3 tools/smoke/run.py           # smoke run: new game to Misty in mGBA, headless (needs libmgba-dev)
 ```
 
 Only the FireRed target is supported now: our config points at FireRed flags (`include/constants/flags_frlg.h`).
